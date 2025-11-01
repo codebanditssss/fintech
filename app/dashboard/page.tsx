@@ -1,21 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Upload, FileText, Database, Download, Settings, Search, AlertCircle, LogOut } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { FileText, Download, Settings, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { setupNavigationGuard, navigateWithToken } from '@/lib/navigation';
+import { toast } from 'sonner';
+import { setupNavigationGuard } from '@/lib/navigation';
 import UploadZone from '../components/UploadZone';
 import JobStatus from '../components/JobStatus';
 import ResultsTable from '../components/ResultsTable';
 import SynonymsPanel from '../components/SynonymsPanel';
 import EvidenceDrawer from '../components/EvidenceDrawer';
+import { getJobStatus, exportCSV } from '@/lib/api';
 
 export default function Dashboard() {
   const [selectedEvidence, setSelectedEvidence] = useState<any>(null);
   const [jobStatus, setJobStatus] = useState<'idle' | 'processing' | 'completed' | 'error'>('idle');
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [documentsCount, setDocumentsCount] = useState(0);
+  const [recordsCount, setRecordsCount] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | undefined>();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
@@ -43,11 +51,103 @@ export default function Dashboard() {
     checkAuth();
   }, [router, supabase]);
 
+  // Load jobId from localStorage on mount
+  useEffect(() => {
+    const savedJobId = localStorage.getItem('currentJobId');
+    if (savedJobId) {
+      setCurrentJobId(savedJobId);
+      const loadJobStatus = async () => {
+        try {
+          const status = await getJobStatus(savedJobId);
+          setJobStatus(status.status === 'done' ? 'completed' : status.status === 'running' ? 'processing' : status.status);
+          setProgress(status.progress || 0);
+          setDocumentsCount(status.documentsProcessed || 0);
+          setRecordsCount(status.totalRecords || 0);
+          setStatusMessage(status.message);
+        } catch (error) {
+          console.error('Failed to load saved job:', error);
+          localStorage.removeItem('currentJobId');
+        }
+      };
+      loadJobStatus();
+    }
+  }, []);
+
+  // Poll job status when we have an active job
+  useEffect(() => {
+    if (!currentJobId || jobStatus === 'completed' || jobStatus === 'error') {
+      return;
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const status = await getJobStatus(currentJobId);
+        setProgress(status.progress || 0);
+        setDocumentsCount(status.documentsProcessed || 0);
+        setRecordsCount(status.totalRecords || 0);
+        setStatusMessage(status.message);
+        
+        if (status.status === 'done') {
+          setJobStatus('completed');
+          clearInterval(pollInterval);
+        } else if (status.status === 'error') {
+          setJobStatus('error');
+          clearInterval(pollInterval);
+        } else if (status.status === 'running') {
+          setJobStatus('processing');
+        }
+      } catch (error) {
+        console.error('Error polling job status:', error);
+      }
+    }, 2000);
+
+    return () => clearInterval(pollInterval);
+  }, [currentJobId, jobStatus]);
+
   // Setup navigation guard to prevent browser navigation
   useEffect(() => {
     const cleanup = setupNavigationGuard(router);
     return cleanup;
   }, [router]);
+
+  const handleJobCreated = useCallback((jobId: string) => {
+    setCurrentJobId(jobId);
+    setJobStatus('processing');
+    setProgress(0);
+    localStorage.setItem('currentJobId', jobId);
+  }, []);
+
+  const handleRefreshResults = useCallback(() => {
+    // Trigger results table refresh by updating a key or state
+  }, []);
+
+  const handleExportCSV = async () => {
+    if (!currentJobId) {
+      toast.error('No job to export');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      await exportCSV(currentJobId);
+      toast.success('CSV exported successfully');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export CSV');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleNewUpload = () => {
+    setCurrentJobId(null);
+    setJobStatus('idle');
+    setProgress(0);
+    setDocumentsCount(0);
+    setRecordsCount(0);
+    setStatusMessage(undefined);
+    localStorage.removeItem('currentJobId');
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -88,15 +188,35 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors flex items-center gap-2">
+            {currentJobId && jobStatus === 'completed' && (
+              <button 
+                onClick={handleNewUpload}
+                className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+              >
+                New Upload
+              </button>
+            )}
+            <button 
+              onClick={handleExportCSV}
+              disabled={!currentJobId || isExporting}
+              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Download className="w-4 h-4" />
-              Export CSV
+              {isExporting ? 'Exporting...' : 'Export CSV'}
             </button>
             <button 
               onClick={() => setIsSettingsModalOpen(true)}
               className="p-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
             >
               <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="p-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -107,23 +227,32 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Upload Zone */}
           <div className="lg:col-span-2">
-            <UploadZone onUpload={(files) => console.log(files)} />
+            <UploadZone onJobCreated={handleJobCreated} />
           </div>
 
           {/* Job Status */}
           <div>
-            <JobStatus status={jobStatus} />
+            <JobStatus 
+              status={jobStatus}
+              progress={progress}
+              documentsCount={documentsCount}
+              recordsCount={recordsCount}
+              message={statusMessage}
+            />
           </div>
         </div>
 
         {/* Results Table */}
         <div className="mb-6">
-          <ResultsTable onRowClick={(row) => setSelectedEvidence(row)} />
-          </div>
+          <ResultsTable 
+            jobId={currentJobId} 
+            onRowClick={(row) => setSelectedEvidence(row)} 
+          />
+        </div>
 
         {/* Synonyms Panel */}
         <div>
-          <SynonymsPanel />
+          <SynonymsPanel onSynonymChange={handleRefreshResults} />
         </div>
       </main>
 
