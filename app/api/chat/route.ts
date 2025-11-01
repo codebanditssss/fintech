@@ -8,9 +8,12 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[Chat API] Received request');
     const { jobId, question, conversationHistory } = await request.json();
+    console.log('[Chat API] jobId:', jobId, 'question:', question);
 
     if (!jobId || !question) {
+      console.error('[Chat API] Missing required fields');
       return NextResponse.json(
         { error: 'Missing jobId or question' },
         { status: 400 }
@@ -18,6 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch all results for this job
+    console.log('[Chat API] Fetching results for jobId:', jobId);
     const { data: results, error: resultsError } = await supabase
       .from('results')
       .select('*')
@@ -25,12 +29,14 @@ export async function POST(request: NextRequest) {
       .order('created_at', { ascending: true });
 
     if (resultsError) {
-      console.error('Error fetching results:', resultsError);
+      console.error('[Chat API] Error fetching results:', resultsError);
       return NextResponse.json(
-        { error: 'Failed to fetch results' },
+        { error: 'Failed to fetch results', details: resultsError.message },
         { status: 500 }
       );
     }
+
+    console.log('[Chat API] Found', results?.length || 0, 'results');
 
     if (!results || results.length === 0) {
       return NextResponse.json({
@@ -76,6 +82,7 @@ Instructions:
 Answer:`;
 
     // Call OpenAI
+    console.log('[Chat API] Calling OpenAI...');
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -93,20 +100,23 @@ Answer:`;
     });
 
     const answer = completion.choices[0].message.content || 'I could not generate an answer.';
+    console.log('[Chat API] Got answer:', answer.substring(0, 100));
 
     // Store chat in database (optional - for history)
     await supabase.from('chat_history').insert({
       job_id: jobId,
       question,
       answer,
-    }).catch(err => console.log('Note: chat_history table may not exist yet:', err.message));
+    }).catch(err => console.log('[Chat API] Note: chat_history table may not exist yet:', err.message));
 
+    console.log('[Chat API] Returning success response');
     return NextResponse.json({ answer });
 
   } catch (error) {
-    console.error('Chat API error:', error);
+    console.error('[Chat API] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
