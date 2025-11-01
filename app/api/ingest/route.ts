@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { processPDFBatch } from '@/lib/openai-service';
+import { uploadFileToStorage } from '@/lib/storage-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,15 +35,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Process each file
+    // Process each file and optionally upload to storage
     const documentPromises = files.map(async (file) => {
-      // For now, we'll store file metadata without actual file storage
-      // In production, you'd upload to Supabase Storage
+      // Try to upload to Supabase Storage (optional, won't fail if it doesn't work)
+      const filePath = await uploadFileToStorage(file, job.id);
+
       const { data: document, error: docError } = await supabase
         .from('documents')
         .insert({
           name: file.name,
-          file_path: `/uploads/${job.id}/${file.name}`,
+          file_path: filePath,
           file_size: file.size,
           status: 'uploaded',
         })
@@ -68,8 +71,8 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', job.id);
 
-    // Start background processing (in a real app, this would be a separate worker)
-    processDocuments(job.id, validDocuments.map(d => d!.id));
+    // Start background processing with real OpenAI extraction
+    processDocuments(job.id, validDocuments.map(d => d!.id), files);
 
     return NextResponse.json({
       jobId: job.id,
@@ -85,19 +88,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Background processing function (simulated)
-async function processDocuments(jobId: string, documentIds: string[]) {
+// Real processing function with OpenAI
+async function processDocuments(jobId: string, documentIds: string[], files: File[]) {
   try {
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log(`[Job ${jobId}] Starting real OCR processing for ${files.length} files`);
 
-    // Update job progress
+    // Update job to running
     await supabase
       .from('jobs')
-      .update({ progress: 30, message: 'Extracting text from PDFs...' })
+      .update({ 
+        progress: 5, 
+        message: 'Initializing OCR engine...' 
+      })
       .eq('id', jobId);
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
 
     // Get synonyms for mapping
     const { data: synonyms } = await supabase
@@ -105,82 +108,122 @@ async function processDocuments(jobId: string, documentIds: string[]) {
       .select('*');
 
     const synonymMap = new Map(synonyms?.map(s => [s.term.toLowerCase(), s.canonical]) || []);
+    console.log(`[Job ${jobId}] Loaded ${synonyms?.length || 0} synonym mappings`);
 
-    // Generate mock results for each document
-    const mockResults = [];
-    for (const docId of documentIds) {
+    // Process all PDFs with OpenAI
+    let currentProgress = 10;
+    const allResults: any[] = [];
+
+    const extractionResults = await processPDFBatch(files, async (current, total, filename) => {
+      // Update progress for each file
+      currentProgress = 10 + Math.floor((current / total) * 60);
+      await supabase
+        .from('jobs')
+        .update({ 
+          progress: currentProgress,
+          message: `Extracting data from ${filename} (${current}/${total})...`
+        })
+        .eq('id', jobId);
+      
+      console.log(`[Job ${jobId}] Processing ${filename}: ${current}/${total}`);
+    });
+
+    console.log(`[Job ${jobId}] OpenAI extraction complete. Processing results...`);
+
+    await supabase
+      .from('jobs')
+      .update({ 
+        progress: 75,
+        message: 'Mapping extracted terms to canonical fields...'
+      })
+      .eq('id', jobId);
+
+    // Map extraction results to database format
+    for (let i = 0; i < extractionResults.length; i++) {
+      const extraction = extractionResults[i];
+      const docId = documentIds[i];
+
+      // Get document info
       const { data: doc } = await supabase
         .from('documents')
         .select('*')
         .eq('id', docId)
         .single();
 
-      if (!doc) continue;
+      if (!doc || extraction.results.length === 0) {
+        console.log(`[Job ${jobId}] No results for ${extraction.filename}`);
+        continue;
+      }
 
-      // Generate sample extracted data
-      const sampleTerms = [
-        { term: 'GST', value: '1200.00', page: 1, evidence: 'GST Amount: Rs. 1200.00' },
-        { term: 'VAT', value: '850.50', page: 2, evidence: 'VAT: Rs. 850.50' },
-        { term: 'Service Tax', value: '450.00', page: 1, evidence: 'Service Tax: Rs. 450.00' },
-      ];
+      // Map each extracted term
+      for (const extracted of extraction.results) {
+        // Find canonical term from synonyms
+        const canonical = synonymMap.get(extracted.term.toLowerCase()) || extracted.term;
 
-      for (const item of sampleTerms) {
-        const canonical = synonymMap.get(item.term.toLowerCase()) || item.term;
-        
-        mockResults.push({
+        allResults.push({
           job_id: jobId,
           doc_id: docId,
           doc_name: doc.name,
-          page: item.page,
-          original_term: item.term,
+          page: extracted.page,
+          original_term: extracted.term,
           canonical: canonical,
-          value: item.value,
-          confidence: Math.floor(Math.random() * 10) + 90, // 90-100%
-          evidence: item.evidence,
+          value: extracted.value,
+          confidence: extracted.confidence,
+          evidence: extracted.evidence,
         });
       }
     }
 
+    console.log(`[Job ${jobId}] Mapped ${allResults.length} financial terms`);
+
     await supabase
       .from('jobs')
-      .update({ progress: 60, message: 'Normalizing extracted data...' })
+      .update({ 
+        progress: 85,
+        message: 'Saving extracted data...'
+      })
       .eq('id', jobId);
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Insert results
-    if (mockResults.length > 0) {
+    // Insert all results to database
+    if (allResults.length > 0) {
       const { error: resultsError } = await supabase
         .from('results')
-        .insert(mockResults);
+        .insert(allResults);
 
       if (resultsError) {
-        console.error('Error inserting results:', resultsError);
+        console.error(`[Job ${jobId}] Error inserting results:`, resultsError);
         throw resultsError;
       }
     }
 
     await supabase
       .from('jobs')
-      .update({ progress: 90, message: 'Finalizing results...' })
+      .update({ 
+        progress: 95,
+        message: 'Finalizing...'
+      })
       .eq('id', jobId);
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait a moment for UI effect
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Mark job as done
+    // Mark job as complete
     await supabase
       .from('jobs')
       .update({
         status: 'done',
         progress: 100,
-        documents_processed: documentIds.length,
-        total_records: mockResults.length,
-        message: 'Processing completed successfully',
+        documents_processed: files.length,
+        total_records: allResults.length,
+        message: `Successfully extracted ${allResults.length} financial terms from ${files.length} documents`,
       })
       .eq('id', jobId);
 
+    console.log(`[Job ${jobId}] Processing complete! Total records: ${allResults.length}`);
+
   } catch (error) {
-    console.error('Processing error:', error);
+    console.error(`[Job ${jobId}] Processing error:`, error);
+    
     await supabase
       .from('jobs')
       .update({
