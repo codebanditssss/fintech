@@ -31,6 +31,7 @@ export default function DashboardRedesign() {
   const [isExporting, setIsExporting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | undefined>();
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isSynonymsModalOpen, setIsSynonymsModalOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Mock data for now - will integrate with real data
@@ -207,16 +208,16 @@ export default function DashboardRedesign() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top Bar with Synonyms and Upload */}
-        <div className="bg-white border-b border-zinc-200 px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
+        <div className="bg-white border-b border-zinc-200 px-4 md:px-6 py-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             {/* Synonyms Dock */}
-            <div className="flex-1">
+            <div className="flex-1 w-full md:w-auto">
               <SynonymsDock
                 synonyms={synonyms}
-                onAdd={() => console.log('Add synonym')}
-                onEdit={(id) => console.log('Edit:', id)}
+                onAdd={() => setIsSynonymsModalOpen(true)}
+                onEdit={(id) => setIsSynonymsModalOpen(true)}
                 onDelete={(id) => console.log('Delete:', id)}
               />
             </div>
@@ -243,34 +244,37 @@ export default function DashboardRedesign() {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* Upload Zone */}
-            <UploadZone onJobCreated={handleJobCreated} />
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-zinc-50">
+          <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+            {/* Upload Zone - Only show if no active job */}
+            {!currentJobId && (
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 md:p-8">
+                <UploadZone onJobCreated={handleJobCreated} />
+              </div>
+            )}
 
             {/* Job Status */}
-            {currentJobId && (
-              <JobStatus
-                status={jobStatus}
-                progress={progress}
-                documentsCount={documentsCount}
-                recordsCount={recordsCount}
-                message={statusMessage}
-              />
+            {currentJobId && jobStatus !== 'completed' && (
+              <div className="bg-white rounded-xl border border-zinc-200 p-4 md:p-6">
+                <JobStatus
+                  status={jobStatus}
+                  progress={progress}
+                  documentsCount={documentsCount}
+                  recordsCount={recordsCount}
+                  message={statusMessage}
+                />
+              </div>
             )}
 
             {/* Results Table */}
             {currentJobId && (
-              <ResultsTable
-                jobId={currentJobId}
-                onRowClick={(row) => setSelectedEvidence(row)}
-              />
+              <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
+                <ResultsTable
+                  jobId={currentJobId}
+                  onRowClick={(row) => setSelectedEvidence(row)}
+                />
+              </div>
             )}
-
-            {/* Synonyms Management */}
-            <div className="bg-white rounded-lg border border-zinc-200 p-6">
-              <SynonymsPanel onSynonymChange={handleRefreshResults} />
-            </div>
           </div>
         </div>
       </div>
@@ -296,6 +300,31 @@ export default function DashboardRedesign() {
           <p className="text-sm text-zinc-600">Settings panel coming soon...</p>
         </div>
       </Modal>
+
+      {/* Synonyms Management Modal */}
+      {isSynonymsModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[80vh] overflow-hidden shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
+              <h2 className="text-xl font-semibold text-zinc-900">Manage Synonyms</h2>
+              <button
+                onClick={() => setIsSynonymsModalOpen(false)}
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="overflow-y-auto max-h-[calc(80vh-80px)] p-6">
+              <SynonymsPanel onSynonymChange={handleRefreshResults} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

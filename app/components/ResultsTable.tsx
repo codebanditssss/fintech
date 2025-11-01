@@ -47,51 +47,51 @@ export default function ResultsTable({ jobId, onRowClick }: ResultsTableProps) {
   );
 
   return (
-    <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-zinc-200">
-        <div className="flex items-center justify-between gap-4">
+    <div className="overflow-hidden">
+      <div className="px-4 md:px-6 py-4 border-b border-zinc-200 bg-white">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h2 className="text-sm font-semibold text-zinc-900">Normalized Results</h2>
             <p className="text-xs text-zinc-500 mt-1">
               {filteredData.length} records • Click any row to view evidence
             </p>
           </div>
-          <div className="relative">
+          <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <input
               type="text"
               placeholder="Search records..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent w-64"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent"
             />
           </div>
         </div>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[800px]">
           <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+              <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">
                 Document
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+              <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">
                 Page
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+              <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">
                 Original Term
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+              <th className="px-4 md:px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider">
                 Canonical Field
               </th>
-              <th className="px-6 py-3 text-right text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+              <th className="px-4 md:px-6 py-3 text-right text-xs font-semibold text-zinc-600 uppercase tracking-wider">
                 Value
               </th>
-              <th className="px-6 py-3 text-center text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+              <th className="px-4 md:px-6 py-3 text-center text-xs font-semibold text-zinc-600 uppercase tracking-wider">
                 Confidence
               </th>
-              <th className="px-6 py-3 text-center text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+              <th className="px-4 md:px-6 py-3 text-center text-xs font-semibold text-zinc-600 uppercase tracking-wider">
                 Evidence
               </th>
             </tr>
@@ -131,7 +131,7 @@ export default function ResultsTable({ jobId, onRowClick }: ResultsTableProps) {
                   onClick={() => onRowClick(row)}
                   className="hover:bg-zinc-50 cursor-pointer transition-colors"
                 >
-                  <td className="px-6 py-4">
+                  <td className="px-4 md:px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-zinc-100 rounded flex items-center justify-center shrink-0">
                         <FileText className="w-4 h-4 text-zinc-600" />
@@ -141,25 +141,25 @@ export default function ResultsTable({ jobId, onRowClick }: ResultsTableProps) {
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 md:px-6 py-4">
                     <span className="text-sm text-zinc-600">{row.page}</span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 md:px-6 py-4">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-zinc-100 text-xs font-medium text-zinc-700">
                       {row.originalTerm}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 md:px-6 py-4">
                     <span className="text-sm font-medium text-zinc-900">
                       {row.canonical}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-4 md:px-6 py-4 text-right">
                     <span className="text-sm font-mono text-zinc-900">
                       ${row.value}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 md:px-6 py-4 text-center">
                     <span
                       className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                         row.confidence >= 95
@@ -172,7 +172,7 @@ export default function ResultsTable({ jobId, onRowClick }: ResultsTableProps) {
                       {row.confidence}%
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 md:px-6 py-4 text-center">
                     <button className="p-1.5 hover:bg-zinc-200 rounded transition-colors">
                       <ExternalLink className="w-4 h-4 text-zinc-600" />
                     </button>
@@ -185,7 +185,7 @@ export default function ResultsTable({ jobId, onRowClick }: ResultsTableProps) {
       </div>
 
       {filteredData.length > 0 && (
-        <div className="px-6 py-4 border-t border-zinc-200 flex items-center justify-between">
+        <div className="px-4 md:px-6 py-4 border-t border-zinc-200 bg-white flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-xs text-zinc-500">
             Showing {filteredData.length} of {data.length} results
           </p>
