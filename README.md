@@ -69,7 +69,7 @@ cd Hackathon-project2
 
 2. Install dependencies:
 ```bash
-npm install
+pnpm install
 ```
 
 3. Set up environment variables:
@@ -82,7 +82,7 @@ OPENAI_API_KEY=your_openai_api_key
 
 4. Run the development server:
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser
@@ -248,18 +248,18 @@ Export results to CSV format.
 
 ### Running Tests
 ```bash
-npm run test
+pnpm run test
 ```
 
 ### Building for Production
 ```bash
-npm run build
-npm start
+pnpm run build
+pnpm start
 ```
 
 ### Linting
 ```bash
-npm run lint
+pnpm run lint
 ```
 
 ## Troubleshooting
