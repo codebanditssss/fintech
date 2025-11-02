@@ -1,26 +1,42 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Upload, File, X, Loader2 } from 'lucide-react';
+import React, { useState, useCallback, useRef } from 'react';
+import { Upload, File, X, Loader2, PenTool } from 'lucide-react';
 import { toast } from 'sonner';
-import { uploadFiles } from '@/lib/api';
+import { uploadFiles, uploadHandwrittenFiles } from '@/lib/api';
 
 interface UploadZoneProps {
   onJobCreated: (jobId: string) => void;
 }
 
+type InvoiceType = 'regular' | 'handwritten';
+
 export default function UploadZone({ onJobCreated }: UploadZoneProps) {
+  const [invoiceType, setInvoiceType] = useState<InvoiceType>('regular');
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const dragCounter = useRef(0);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
+    
+    if (e.type === 'dragenter') {
+      dragCounter.current++;
+      if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        setDragActive(true);
+      }
     } else if (e.type === 'dragleave') {
-      setDragActive(false);
+      dragCounter.current--;
+      if (dragCounter.current === 0) {
+        setDragActive(false);
+      }
+    } else if (e.type === 'dragover') {
+      e.preventDefault();
+      if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        setDragActive(true);
+      }
     }
   }, []);
 
@@ -28,32 +44,100 @@ export default function UploadZone({ onJobCreated }: UploadZoneProps) {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
+    dragCounter.current = 0;
 
-    const files = Array.from(e.dataTransfer.files).filter(
-      file => file.type === 'application/pdf'
-    );
-    
-    if (files.length > 0) {
-      setUploadedFiles(prev => [...prev, ...files]);
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    droppedFiles.forEach(file => {
+      if (invoiceType === 'regular') {
+        if (file.type === 'application/pdf') {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(file.name);
+        }
+      } else {
+        // For handwritten, accept PDF, images
+        if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(file.name);
+        }
+      }
+    });
+
+    if (validFiles.length > 0) {
+      setUploadedFiles(prev => [...prev, ...validFiles]);
+      toast.success(`Added ${validFiles.length} file${validFiles.length > 1 ? 's' : ''}`);
     }
-  }, []);
+
+    if (invalidFiles.length > 0) {
+      const expectedTypes = invoiceType === 'regular' 
+        ? 'PDF files'
+        : 'PDF or image files (PNG, JPG, etc.)';
+      toast.error(
+        `${invalidFiles.length} file${invalidFiles.length > 1 ? 's' : ''} rejected. Only ${expectedTypes} are allowed.`,
+        { duration: 4000 }
+      );
+    }
+  }, [invoiceType]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setUploadedFiles(prev => [...prev, ...files]);
+      const selectedFiles = Array.from(e.target.files);
+      const validFiles: File[] = [];
+      const invalidFiles: string[] = [];
+
+      selectedFiles.forEach(file => {
+        if (invoiceType === 'regular') {
+          if (file.type === 'application/pdf') {
+            validFiles.push(file);
+          } else {
+            invalidFiles.push(file.name);
+          }
+        } else {
+          // For handwritten, accept PDF, images
+          if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
+            validFiles.push(file);
+          } else {
+            invalidFiles.push(file.name);
+          }
+        }
+      });
+
+      if (validFiles.length > 0) {
+        setUploadedFiles(prev => [...prev, ...validFiles]);
+        toast.success(`Added ${validFiles.length} file${validFiles.length > 1 ? 's' : ''}`);
+      }
+
+      if (invalidFiles.length > 0) {
+        const expectedTypes = invoiceType === 'regular' 
+          ? 'PDF files'
+          : 'PDF or image files (PNG, JPG, etc.)';
+        toast.error(
+          `${invalidFiles.length} file${invalidFiles.length > 1 ? 's' : ''} rejected. Only ${expectedTypes} are allowed.`,
+          { duration: 4000 }
+        );
+      }
+
+      // Reset input value to allow re-selecting the same file
+      e.target.value = '';
     }
   };
 
   const handleProcess = async () => {
     if (uploadedFiles.length === 0) {
-      toast.error('Please upload at least one PDF file');
+      toast.error(`Please upload at least one ${invoiceType === 'regular' ? 'PDF' : 'image or PDF'} file`);
       return;
     }
 
     setIsProcessing(true);
     try {
-      const response = await uploadFiles(uploadedFiles);
+      const response = invoiceType === 'handwritten' 
+        ? await uploadHandwrittenFiles(uploadedFiles)
+        : await uploadFiles(uploadedFiles);
+      
       onJobCreated(response.jobId);
       toast.success(`Processing started! Job ID: ${response.jobId}`);
       setUploadedFiles([]); // Clear uploaded files
@@ -73,14 +157,45 @@ export default function UploadZone({ onJobCreated }: UploadZoneProps) {
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
       <div className="px-6 py-4 border-b border-zinc-200">
         <h2 className="text-sm font-semibold text-zinc-900">Upload Documents</h2>
-        <p className="text-xs text-zinc-500 mt-1">Upload PDF files to extract and normalize financial data</p>
+        <p className="text-xs text-zinc-500 mt-1">Upload invoices to extract and normalize financial data</p>
+        
+        {/* Invoice Type Tabs */}
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => {
+              setInvoiceType('regular');
+              setUploadedFiles([]);
+            }}
+            className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
+              invoiceType === 'regular'
+                ? 'bg-zinc-900 text-white'
+                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+            }`}
+          >
+            Regular Invoices
+          </button>
+          <button
+            onClick={() => {
+              setInvoiceType('handwritten');
+              setUploadedFiles([]);
+            }}
+            className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${
+              invoiceType === 'handwritten'
+                ? 'bg-zinc-900 text-white'
+                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+            }`}
+          >
+            <PenTool className="w-3 h-3" />
+            Handwritten Invoices
+          </button>
+        </div>
       </div>
 
       <div className="p-6">
         <div
-          className={`relative border-2 border-dashed rounded-lg transition-all ${
+          className={`relative border-2 border-dashed rounded-lg transition-all duration-200 ${
             dragActive
-              ? 'border-zinc-400 bg-zinc-50'
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-[1.02]'
               : 'border-zinc-300 hover:border-zinc-400'
           }`}
           onDragEnter={handleDrag}
@@ -91,19 +206,34 @@ export default function UploadZone({ onJobCreated }: UploadZoneProps) {
           <input
             type="file"
             multiple
-            accept=".pdf"
+            accept={invoiceType === 'regular' ? '.pdf' : '.pdf,image/*'}
             onChange={handleFileInput}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
           <div className="py-12 px-6 text-center">
-            <div className="w-12 h-12 bg-zinc-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <Upload className="w-6 h-6 text-zinc-600" />
+            <div className={`w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-4 transition-colors ${
+              dragActive ? 'bg-blue-100' : 'bg-zinc-100'
+            }`}>
+              {invoiceType === 'handwritten' ? (
+                <PenTool className={`w-6 h-6 ${dragActive ? 'text-blue-600' : 'text-zinc-600'}`} />
+              ) : (
+                <Upload className={`w-6 h-6 ${dragActive ? 'text-blue-600' : 'text-zinc-600'}`} />
+              )}
             </div>
-            <p className="text-sm font-medium text-zinc-900 mb-1">
-              Drop PDF files here or click to browse
+            <p className={`text-sm font-medium mb-1 transition-colors ${
+              dragActive ? 'text-blue-700' : 'text-zinc-900'
+            }`}>
+              {dragActive 
+                ? 'Drop files here to upload'
+                : invoiceType === 'handwritten' 
+                  ? 'Drop handwritten invoices here or click to browse'
+                  : 'Drop PDF files here or click to browse'
+              }
             </p>
             <p className="text-xs text-zinc-500">
-              Support for multiple files • Maximum 10MB per file
+              {invoiceType === 'handwritten'
+                ? 'Supports PDF, PNG, JPG images • Maximum 10MB per file • Uses Gemini AI for better handwriting recognition'
+                : 'Support for multiple files • Maximum 10MB per file'}
             </p>
           </div>
         </div>

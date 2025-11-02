@@ -92,18 +92,64 @@ export default function SynonymsPanel({ onSynonymChange }: SynonymsPanelProps) {
       return;
     }
 
+    // Check if synonym already exists
+    const existing = synonyms.find(s => s.term.toLowerCase().trim() === newTerm.toLowerCase().trim());
+    
     setIsSaving(true);
     try {
-      const newSynonym = await createSynonym(newTerm, newCanonical);
-      setSynonyms(prev => [...prev, newSynonym]);
+      if (existing) {
+        // Update existing synonym instead of creating new one
+        await updateSynonym(existing.id, newTerm.trim(), newCanonical.trim());
+        setSynonyms(prev =>
+          prev.map(s =>
+            s.id === existing.id
+              ? { ...s, term: newTerm.trim(), canonical: newCanonical.trim() }
+              : s
+          )
+        );
+        toast.success('Synonym updated successfully');
+      } else {
+        // Create new synonym
+        const newSynonym = await createSynonym(newTerm.trim(), newCanonical.trim());
+        setSynonyms(prev => [...prev, newSynonym]);
+        toast.success('Synonym added successfully');
+      }
       setNewTerm('');
       setNewCanonical('');
       setIsAdding(false);
-      toast.success('Synonym added successfully');
       onSynonymChange?.();
-    } catch (error) {
-      toast.error('Failed to add synonym');
-      console.error('Error adding synonym:', error);
+    } catch (error: any) {
+      // Check if it's a duplicate error from the server
+      if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
+        // Try to find and update it
+        const existingByTerm = synonyms.find(s => s.term.toLowerCase().trim() === newTerm.toLowerCase().trim());
+        if (existingByTerm) {
+          try {
+            await updateSynonym(existingByTerm.id, newTerm.trim(), newCanonical.trim());
+            setSynonyms(prev =>
+              prev.map(s =>
+                s.id === existingByTerm.id
+                  ? { ...s, term: newTerm.trim(), canonical: newCanonical.trim() }
+                  : s
+              )
+            );
+            toast.success('Synonym updated successfully');
+            setNewTerm('');
+            setNewCanonical('');
+            setIsAdding(false);
+            onSynonymChange?.();
+            return;
+          } catch (updateError) {
+            toast.error('Failed to update existing synonym');
+            console.error('Error updating synonym:', updateError);
+          }
+        } else {
+          toast.error('A synonym with this term already exists. Please edit the existing one.');
+        }
+      } else {
+        toast.error(error.message || 'Failed to add synonym');
+        console.error('Error adding synonym:', error);
+      }
     } finally {
       setIsSaving(false);
     }

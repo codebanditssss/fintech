@@ -50,6 +50,23 @@ export async function uploadFiles(files: File[]): Promise<JobResponse> {
   return response.json();
 }
 
+// Upload handwritten invoice files and create processing job
+export async function uploadHandwrittenFiles(files: File[]): Promise<JobResponse> {
+  const formData = new FormData();
+  files.forEach(file => formData.append('files', file));
+
+  const response = await fetch('/api/ingest-handwritten', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('Upload failed');
+  }
+
+  return response.json();
+}
+
 // Get job status and progress
 export async function getJobStatus(jobId: string): Promise<JobStatusResponse> {
   const response = await fetch(`/api/status/${jobId}`);
@@ -92,7 +109,8 @@ export async function createSynonym(term: string, canonical: string): Promise<Sy
   });
 
   if (!response.ok) {
-    throw new Error('Failed to create synonym');
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to create synonym: ${response.statusText}`);
   }
 
   return response.json();

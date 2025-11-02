@@ -26,11 +26,18 @@ export default function ResultsTable({ jobId, onRowClick }: ResultsTableProps) {
       setIsLoading(true);
       setError(null);
       try {
+        console.log(`[ResultsTable] Fetching results for jobId: ${jobId}`);
         const results = await getResults(jobId);
+        console.log(`[ResultsTable] Received ${results.length} results`);
+        if (results.length === 0) {
+          console.warn(`[ResultsTable] ⚠️ No results received for jobId ${jobId}`);
+        } else {
+          console.log(`[ResultsTable] Sample results:`, results.slice(0, 3));
+        }
         setData(results);
       } catch (err) {
         setError('Failed to load results');
-        console.error('Error fetching results:', err);
+        console.error('[ResultsTable] Error fetching results:', err);
       } finally {
         setIsLoading(false);
       }

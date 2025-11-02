@@ -49,18 +49,25 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error creating synonym:', error);
+      // Check for duplicate key violation
+      if (error.code === '23505' || error.message?.includes('duplicate') || error.message?.includes('unique')) {
+        return NextResponse.json(
+          { error: 'A synonym with this term already exists' },
+          { status: 409 }
+        );
+      }
       return NextResponse.json(
-        { error: error.message || 'Failed to create synonym' },
+        { error: error.message || 'Failed to create synonym', details: error },
         { status: 500 }
       );
     }
 
     return NextResponse.json(synonym, { status: 201 });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Synonym creation error:', error);
     return NextResponse.json(
-      { error: 'Failed to create synonym' },
+      { error: error.message || 'Failed to create synonym', details: error },
       { status: 500 }
     );
   }
