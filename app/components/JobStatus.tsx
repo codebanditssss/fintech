@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import React from 'react';
 
 interface JobStatusProps {
   status: 'idle' | 'processing' | 'completed' | 'error';
@@ -10,6 +11,15 @@ interface JobStatusProps {
   recordsCount?: number;
 }
 
+type StatusConfig = {
+  icon: React.ComponentType<{ className?: string }>;
+  text: string;
+  color: string;
+  bg: string;
+  description: string;
+  animate: boolean;
+};
+
 export default function JobStatus({ 
   status, 
   progress = 0, 
@@ -17,7 +27,7 @@ export default function JobStatus({
   documentsCount = 0,
   recordsCount = 0 
 }: JobStatusProps) {
-  const statusConfig = {
+  const statusConfig: Record<'idle' | 'processing' | 'completed' | 'error', StatusConfig> = {
     idle: {
       icon: Clock,
       text: 'Ready',
