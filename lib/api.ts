@@ -146,6 +146,25 @@ export async function deleteSynonym(id: string): Promise<void> {
   }
 }
 
+// Get document history
+export async function getDocumentHistory(): Promise<any[]> {
+  const response = await fetch('/api/history/documents');
+  if (!response.ok) {
+    throw new Error('Failed to fetch document history');
+  }
+  return response.json();
+}
+
+// Get chat history
+export async function getChatHistory(jobId?: string): Promise<any[]> {
+  const url = jobId ? `/api/history/chat?jobId=${jobId}` : '/api/history/chat';
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to fetch chat history');
+  }
+  return response.json();
+}
+
 // Export results as CSV
 export async function exportCSV(jobId?: string): Promise<void> {
   if (!jobId) {

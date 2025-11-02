@@ -14,8 +14,10 @@ import ResultsTable from '../components/ResultsTable';
 import SynonymsPanel from '../components/SynonymsPanel';
 import EvidenceDrawer from '../components/EvidenceDrawer';
 import ChatInterface from '../components/ChatInterface';
+import DocumentHistory from '../components/DocumentHistory';
+import ChatHistory from '../components/ChatHistory';
 import { getJobStatus, exportCSV } from '@/lib/api';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, History } from 'lucide-react';
 
 export default function Dashboard() {
   const [selectedEvidence, setSelectedEvidence] = useState<any>(null);
@@ -250,8 +252,39 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* History Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <DocumentHistory 
+            onDocumentSelect={async (jobId) => {
+              setCurrentJobId(jobId);
+              setJobStatus('completed');
+              
+              // Load job status and data
+              try {
+                const status = await getJobStatus(jobId);
+                setProgress(100);
+                setDocumentsCount(status.documentsProcessed || 0);
+                setRecordsCount(status.totalRecords || 0);
+                setStatusMessage('Document loaded from history');
+                
+                // Scroll to results
+                setTimeout(() => {
+                  const resultsSection = document.getElementById('results-section');
+                  if (resultsSection) {
+                    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 300);
+              } catch (error) {
+                console.error('Error loading job:', error);
+                toast.error('Failed to load document data');
+              }
+            }}
+          />
+          <ChatHistory jobId={currentJobId} />
+        </div>
+
         {/* Results Table */}
-        <div className="mb-6">
+        <div id="results-section" className="mb-6">
           <ResultsTable 
             jobId={currentJobId} 
             onRowClick={(row) => setSelectedEvidence(row)} 
@@ -259,7 +292,7 @@ export default function Dashboard() {
         </div>
 
         {/* Synonyms Panel */}
-        <div>
+        <div className="mb-6">
           <SynonymsPanel onSynonymChange={handleRefreshResults} />
         </div>
       </main>
