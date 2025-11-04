@@ -68,7 +68,7 @@ Finance Concept Translator uses advanced AI to extract financial terms from any 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd Hackathon-project2
+cd FinTech
 ```
 
 2. Install dependencies:
