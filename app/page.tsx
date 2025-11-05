@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { PointerHighlight } from "@/components/ui/pointer-highlight";
 import { setupNavigationGuard } from '@/lib/navigation';
-import { FileText, Zap, Shield, BarChart3, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { FileText, Zap, Shield, BarChart3, ArrowRight, CheckCircle2, Github } from 'lucide-react';
 
 export default function LandingPage() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -247,18 +247,11 @@ export default function LandingPage() {
             <Button 
               variant="primary" 
               size="lg" 
-              className="w-full sm:w-auto px-10 py-6 text-base font-medium"
-              onClick={() => setLoginModalOpen(true)}
+              className="w-full sm:w-auto px-8 py-6 text-base font-medium group"
+              onClick={() => window.open('https://github.com/Annieeeee11/FinTech', '_blank')}
             >
-              Login
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="w-full sm:w-auto px-10 py-6 text-base font-medium"
-              onClick={() => setSignupModalOpen(true)}
-            >
-              Create Account
+              Contribute on GitHub
+              <Github className="ml-2 w-4 h-4 inline-block group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
         </div>
