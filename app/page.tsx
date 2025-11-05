@@ -244,15 +244,15 @@ export default function LandingPage() {
             Built with Next.js, Supabase, and OpenAI. Upload invoices, get structured data.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
-              variant="primary" 
-              size="lg" 
-              className="w-full sm:w-auto px-8 py-6 text-base font-medium group"
-              onClick={() => window.open('https://github.com/Annieeeee11/FinTech', '_blank')}
-            >
-              Contribute on GitHub
-              <Github className="ml-2 w-4 h-4 inline-block group-hover:translate-x-1 transition-transform" />
-            </Button>
+            <Link href="https://github.com/Annieeeee11/FinTech" target="_blank">
+                <Button 
+                 variant="primary" 
+                 size="lg" 
+                 className="w-full sm:w-auto px-8 py-6 text-base font-medium group">
+                   Contribute on GitHub
+                   <Github className="ml-2 w-4 h-4 inline-block group-hover:translate-x-1 transition-transform" />
+                </Button>
+            </Link>
           </div>
         </div>
       </section>
