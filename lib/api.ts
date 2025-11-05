@@ -1,5 +1,3 @@
-// API utilities for backend communication
-
 export interface JobResponse {
   jobId: string;
   status: 'queued' | 'running' | 'done' | 'error';
@@ -33,7 +31,6 @@ export interface JobStatusResponse {
   message?: string;
 }
 
-// Upload files and create processing job
 export async function uploadFiles(files: File[]): Promise<JobResponse> {
   const formData = new FormData();
   files.forEach(file => formData.append('files', file));
@@ -50,7 +47,6 @@ export async function uploadFiles(files: File[]): Promise<JobResponse> {
   return response.json();
 }
 
-// Upload handwritten invoice files and create processing job
 export async function uploadHandwrittenFiles(files: File[]): Promise<JobResponse> {
   const formData = new FormData();
   files.forEach(file => formData.append('files', file));
@@ -67,7 +63,6 @@ export async function uploadHandwrittenFiles(files: File[]): Promise<JobResponse
   return response.json();
 }
 
-// Get job status and progress
 export async function getJobStatus(jobId: string): Promise<JobStatusResponse> {
   const response = await fetch(`/api/status/${jobId}`);
 
@@ -78,7 +73,6 @@ export async function getJobStatus(jobId: string): Promise<JobStatusResponse> {
   return response.json();
 }
 
-// Get processing results for a job
 export async function getResults(jobId: string): Promise<ResultRow[]> {
   const response = await fetch(`/api/results/${jobId}`);
 
@@ -89,7 +83,6 @@ export async function getResults(jobId: string): Promise<ResultRow[]> {
   return response.json();
 }
 
-// Get all synonym mappings
 export async function getSynonyms(): Promise<Synonym[]> {
   const response = await fetch('/api/synonyms');
 
@@ -100,7 +93,6 @@ export async function getSynonyms(): Promise<Synonym[]> {
   return response.json();
 }
 
-// Create a new synonym mapping
 export async function createSynonym(term: string, canonical: string): Promise<Synonym> {
   const response = await fetch('/api/synonyms', {
     method: 'POST',
@@ -116,7 +108,6 @@ export async function createSynonym(term: string, canonical: string): Promise<Sy
   return response.json();
 }
 
-// Update an existing synonym mapping
 export async function updateSynonym(
   id: string,
   term: string,
@@ -135,7 +126,6 @@ export async function updateSynonym(
   return response.json();
 }
 
-// Delete a synonym mapping
 export async function deleteSynonym(id: string): Promise<void> {
   const response = await fetch(`/api/synonyms/${id}`, {
     method: 'DELETE',
@@ -146,7 +136,6 @@ export async function deleteSynonym(id: string): Promise<void> {
   }
 }
 
-// Get document history
 export async function getDocumentHistory(): Promise<any[]> {
   const response = await fetch('/api/history/documents');
   if (!response.ok) {
@@ -155,7 +144,6 @@ export async function getDocumentHistory(): Promise<any[]> {
   return response.json();
 }
 
-// Get chat history
 export async function getChatHistory(jobId?: string): Promise<any[]> {
   const url = jobId ? `/api/history/chat?jobId=${jobId}` : '/api/history/chat';
   const response = await fetch(url);
@@ -165,7 +153,6 @@ export async function getChatHistory(jobId?: string): Promise<any[]> {
   return response.json();
 }
 
-// Export results as CSV
 export async function exportCSV(jobId?: string): Promise<void> {
   if (!jobId) {
     throw new Error('Job ID is required to export CSV');
@@ -175,7 +162,6 @@ export async function exportCSV(jobId?: string): Promise<void> {
   const response = await fetch(url);
 
   if (!response.ok) {
-    // Try to parse error message from JSON response
     const contentType = response.headers.get('content-type');
     if (contentType?.includes('application/json')) {
       const errorData = await response.json().catch(() => ({}));
@@ -195,9 +181,6 @@ export async function exportCSV(jobId?: string): Promise<void> {
   window.URL.revokeObjectURL(downloadUrl);
 }
 
-// API Client adapter for store/hooks
-// This wraps the individual functions to match the expected interface
-// Store references to the exported functions to avoid naming conflicts
 const _getSynonyms = getSynonyms;
 const _createSynonym = createSynonym;
 const _updateSynonym = updateSynonym;
@@ -205,7 +188,6 @@ const _deleteSynonym = deleteSynonym;
 const _getResults = getResults;
 const _getJobStatus = getJobStatus;
 
-// Import types from types.ts to match store expectations
 type StoreSynonym = import('./types').Synonym;
 
 export const apiClient = {
@@ -215,21 +197,17 @@ export const apiClient = {
     return { job_id: response.jobId };
   },
 
-  // Get all synonyms - returns { synonyms: Synonym[] }
   async getSynonyms(): Promise<{ synonyms: StoreSynonym[] }> {
     const synonymsList = await _getSynonyms();
-    // Transform from { id, term, canonical } to { term, canonical }
     return {
       synonyms: synonymsList.map(s => ({ term: s.term, canonical: s.canonical })) as StoreSynonym[]
     };
   },
 
-  // Create synonym - accepts { term, canonical }
   async createSynonym(data: { term: string; canonical: string }): Promise<void> {
     await _createSynonym(data.term, data.canonical);
   },
 
-  // Update synonym by term - finds by term, then updates by id
   async updateSynonym(term: string, canonical: string): Promise<void> {
     const synonymsList = await _getSynonyms();
     const existing = synonymsList.find(s => s.term === term);
@@ -239,7 +217,6 @@ export const apiClient = {
     await _updateSynonym(existing.id, term, canonical);
   },
 
-  // Delete synonym by term - finds by term, then deletes by id
   async deleteSynonym(term: string): Promise<void> {
     const synonymsList = await _getSynonyms();
     const existing = synonymsList.find(s => s.term === term);
@@ -249,10 +226,8 @@ export const apiClient = {
     await _deleteSynonym(existing.id);
   },
 
-  // Get results - transforms ResultRow[] to { rows: ConceptRow[] }
   async getResults(jobId: string): Promise<{ rows: import('./types').ConceptRow[] }> {
     const resultsList = await _getResults(jobId);
-    // Transform ResultRow[] to ConceptRow[]
     const rows = resultsList.map(r => ({
       field: r.originalTerm,
       canonical: r.canonical,
@@ -265,7 +240,6 @@ export const apiClient = {
     return { rows };
   },
 
-  // Get status - extracts status from JobStatusResponse
   async getStatus(jobId: string): Promise<{ status: import('./types').JobStatus }> {
     const response = await _getJobStatus(jobId);
     return { status: response.status };

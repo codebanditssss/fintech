@@ -1,8 +1,5 @@
 import { supabase } from './supabase';
 
-/**
- * Upload a file to Supabase Storage
- */
 export async function uploadFileToStorage(
   file: File,
   jobId: string
@@ -12,7 +9,6 @@ export async function uploadFileToStorage(
     const fileName = `${jobId}/${Date.now()}-${file.name}`;
     const filePath = `uploads/${fileName}`;
 
-    // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from('documents')
       .upload(filePath, file, {
@@ -22,7 +18,6 @@ export async function uploadFileToStorage(
 
     if (uploadError) {
       console.error('Storage upload error:', uploadError);
-      // Don't fail the whole process if storage fails
       return `/local/${file.name}`;
     }
 
@@ -39,9 +34,6 @@ export async function uploadFileToStorage(
   }
 }
 
-/**
- * Create storage bucket if it doesn't exist
- */
 export async function ensureStorageBucket() {
   try {
     const { data: buckets } = await supabase.storage.listBuckets();
@@ -58,7 +50,6 @@ export async function ensureStorageBucket() {
     }
   } catch (error) {
     console.error('Error ensuring storage bucket:', error);
-    // Non-critical, continue without storage
   }
 }
 

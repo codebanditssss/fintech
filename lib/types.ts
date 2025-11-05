@@ -138,10 +138,6 @@ export interface ChatHistoryItem {
   created_at: string;
 }
 
-// ==========================================
-// COMPONENT PROPS TYPES
-// ==========================================
-
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -159,10 +155,6 @@ export interface Evidence {
   confidence: number;
   evidence?: string;
 }
-
-// ==========================================
-// AUTH TYPES
-// ==========================================
 
 export interface AuthFormData {
   email: string;

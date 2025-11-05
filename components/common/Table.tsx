@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, TdHTMLAttributes, ThHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 // ==========================================
@@ -82,18 +82,19 @@ export function TableRow({ children, onClick, className }: TableRowProps) {
 // TABLE HEAD CELL
 // ==========================================
 
-interface TableHeadProps {
+interface TableHeadProps extends ThHTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   className?: string;
 }
 
-export function TableHead({ children, className }: TableHeadProps) {
+export function TableHead({ children, className, ...props }: TableHeadProps) {
   return (
     <th
       className={cn(
         "px-6 py-3 text-left text-xs font-semibold text-zinc-600 uppercase tracking-wider",
         className
       )}
+      {...props}
     >
       {children}
     </th>
@@ -104,13 +105,13 @@ export function TableHead({ children, className }: TableHeadProps) {
 // TABLE CELL
 // ==========================================
 
-interface TableCellProps {
+interface TableCellProps extends TdHTMLAttributes<HTMLTableCellElement> {
   children: ReactNode;
   className?: string;
   align?: 'left' | 'center' | 'right';
 }
 
-export function TableCell({ children, className, align = 'left' }: TableCellProps) {
+export function TableCell({ children, className, align = 'left', ...props }: TableCellProps) {
   const alignClass = {
     left: 'text-left',
     center: 'text-center',
@@ -118,7 +119,7 @@ export function TableCell({ children, className, align = 'left' }: TableCellProp
   }[align];
 
   return (
-    <td className={cn("px-6 py-4", alignClass, className)}>
+    <td className={cn("px-6 py-4", alignClass, className)} {...props}>
       {children}
     </td>
   );

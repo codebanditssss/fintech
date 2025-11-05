@@ -20,9 +20,6 @@ export interface ExtractionResult {
   rawText: string;
 }
 
-/**
- * Convert PDF file to text using pdf2json
- */
 export async function extractTextFromPDF(fileBuffer: Buffer): Promise<{ text: string; pages: number }> {
   return new Promise((resolve, reject) => {
     try {
@@ -34,18 +31,15 @@ export async function extractTextFromPDF(fileBuffer: Buffer): Promise<{ text: st
         try {
           console.log(`✓ PDF loaded: ${pdfData.Pages.length} pages`);
           
-          // Extract text from all pages
           let fullText = '';
           for (const page of pdfData.Pages) {
             if (page.Texts) {
               for (const text of page.Texts) {
                 for (const textRun of text.R) {
                   try {
-                    // Try to decode URI component
                     const decoded = decodeURIComponent(textRun.T);
                     fullText += decoded + ' ';
                   } catch (e) {
-                    // If decoding fails, use the raw text
                     fullText += textRun.T + ' ';
                   }
                 }
@@ -71,7 +65,6 @@ export async function extractTextFromPDF(fileBuffer: Buffer): Promise<{ text: st
         reject(new Error(errData.parserError));
       });
       
-      // Parse the buffer
       pdfParser.parseBuffer(fileBuffer);
     } catch (error) {
       console.error('✗ PDF parsing error:', error);
@@ -80,9 +73,6 @@ export async function extractTextFromPDF(fileBuffer: Buffer): Promise<{ text: st
   });
 }
 
-/**
- * Extract financial data using OpenAI GPT-4
- */
 export async function extractFinancialDataWithAI(
   pdfText: string,
   filename: string,
@@ -143,24 +133,20 @@ Return ONLY the JSON array, no markdown, no explanation, no other text.`;
     console.log(`Response length: ${responseText.length} characters`);
     console.log(`Full response:\n${responseText}`);
     console.log(`=====================================\n`);
-    
-    // Parse response - handle both direct array and wrapped object
+
     let parsed;
     try {
       parsed = JSON.parse(responseText);
       console.log('Parsed type:', Array.isArray(parsed) ? 'array' : typeof parsed);
       
-      // If it's an object with a results key, use that
       if (parsed.results && Array.isArray(parsed.results)) {
         console.log('Found results array in response');
         parsed = parsed.results;
       }
-      // If it's a single object with term/value fields, wrap it in an array
       else if (parsed.term && parsed.value && !Array.isArray(parsed)) {
         console.log('Single result object detected, wrapping in array');
         parsed = [parsed];
       }
-      // If it's wrapped in any key, try to find the array
       else if (!Array.isArray(parsed)) {
         const keys = Object.keys(parsed);
         console.log('Response keys:', keys);
@@ -177,11 +163,9 @@ Return ONLY the JSON array, no markdown, no explanation, no other text.`;
       parsed = [];
     }
 
-    // Ensure it's an array
     const results: ExtractedFinancialData[] = Array.isArray(parsed) ? parsed : [];
     console.log(`Converted to array with ${results.length} items`);
 
-    // Validate and clean results
     const validResults = results
       .filter(r => r.term && r.value)
       .map(r => ({
@@ -209,21 +193,16 @@ Return ONLY the JSON array, no markdown, no explanation, no other text.`;
   }
 }
 
-/**
- * Process a single PDF file with OpenAI
- */
 export async function processPDFWithAI(
   file: File
 ): Promise<ExtractionResult> {
   try {
     console.log(`\n========== Processing ${file.name} ==========`);
-    
-    // Convert File to Buffer
+
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     console.log(`✓ Converted to buffer: ${buffer.length} bytes`);
 
-    // Extract text from PDF
     const { text, pages } = await extractTextFromPDF(buffer);
     console.log(`✓ Extracted text: ${text.length} characters, ${pages} pages`);
     console.log(`First 500 chars: ${text.substring(0, 500)}`);
@@ -232,7 +211,6 @@ export async function processPDFWithAI(
       throw new Error('No text found in PDF - possibly a scanned document');
     }
 
-    // Use OpenAI to extract financial data
     const result = await extractFinancialDataWithAI(text, file.name, pages);
     console.log(`✓ OpenAI returned ${result.results.length} results`);
 
@@ -243,9 +221,6 @@ export async function processPDFWithAI(
   }
 }
 
-/**
- * Batch process multiple PDFs
- */
 export async function processPDFBatch(
   files: File[],
   onProgress?: (current: number, total: number, filename: string) => void
@@ -264,7 +239,6 @@ export async function processPDFBatch(
       results.push(result);
     } catch (error) {
       console.error(`Failed to process ${file.name}:`, error);
-      // Continue with other files even if one fails
       results.push({
         filename: file.name,
         totalPages: 0,
@@ -277,18 +251,12 @@ export async function processPDFBatch(
   return results;
 }
 
-/**
- * Convert image/PDF file to base64 for OpenAI Vision
- */
 async function fileToBase64(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
   return buffer.toString('base64');
 }
 
-/**
- * Get MIME type from file
- */
 function getMimeType(file: File): string {
   if (file.type) {
     return file.type;
@@ -309,16 +277,12 @@ function getMimeType(file: File): string {
   }
 }
 
-/**
- * Extract financial data from handwritten invoice using OpenAI Vision
- */
 export async function extractFinancialDataFromImage(
   file: File
 ): Promise<ExtractionResult> {
   try {
     console.log(`\n========== Processing ${file.name} with OpenAI Vision ==========`);
     
-    // Convert file to base64
     const base64Data = await fileToBase64(file);
     const mimeType = getMimeType(file);
     
@@ -386,7 +350,7 @@ IMPORTANT:
     console.log(`\n========== SENDING TO OPENAI VISION ==========`);
     
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o', // GPT-4o has excellent vision capabilities
+      model: 'gpt-4o',
       messages: [
         {
           role: 'system',
@@ -403,7 +367,7 @@ IMPORTANT:
               type: 'image_url',
               image_url: {
                 url: `data:${mimeType};base64,${base64Data}`,
-                detail: 'high', // High detail for better OCR
+                detail: 'high',
               },
             },
           ],
@@ -420,13 +384,11 @@ IMPORTANT:
     console.log(`Full response:\n${responseText}`);
     console.log(`============================================\n`);
 
-    // Parse response
     let parsed;
     try {
       parsed = JSON.parse(responseText);
       console.log('Parsed type:', Array.isArray(parsed) ? 'array' : typeof parsed);
       
-      // Handle wrapped responses
       if (parsed.results && Array.isArray(parsed.results)) {
         console.log('Found results array in response');
         parsed = parsed.results;
@@ -454,7 +416,6 @@ IMPORTANT:
       console.error('Failed to parse OpenAI response:', e);
       console.error('Raw response (first 500 chars):', responseText.substring(0, 500));
       
-      // Fallback: try to extract just the array part
       try {
         const fallbackMatch = responseText.match(/\[[\s\S]*\]/);
         if (fallbackMatch) {
@@ -469,26 +430,18 @@ IMPORTANT:
       }
     }
 
-    // Ensure it's an array
     const results: ExtractedFinancialData[] = Array.isArray(parsed) ? parsed : [];
     console.log(`Converted to array with ${results.length} items`);
 
-    // Validate and clean results
     const validResults = results
       .filter(r => r.term && r.value)
       .map(r => {
         const rawValue = String(r.value).trim();
-        // Remove currency symbols, commas, percentage signs, plus signs, minus signs, and whitespace
         let cleanedValue = rawValue.replace(/[$Rs.,%\s+-]/g, '').trim();
-        // Remove any remaining plus or minus signs (in case they're at the start or anywhere)
         cleanedValue = cleanedValue.replace(/[+-]/g, '').trim();
-        
-        // Remove any non-digit characters except dot and digits
         cleanedValue = cleanedValue.replace(/[^\d.]/g, '');
-        
-        // Ensure proper format: only digits and decimal point
+
         if (!cleanedValue.match(/^\d+\.?\d*$/)) {
-          // Fallback: extract all digits and decimal point only
           cleanedValue = cleanedValue.replace(/[^\d.]/g, '');
         }
         
@@ -525,9 +478,6 @@ IMPORTANT:
   }
 }
 
-/**
- * Process a single handwritten invoice file with OpenAI Vision
- */
 export async function processHandwrittenInvoiceWithOpenAI(
   file: File
 ): Promise<ExtractionResult> {
@@ -540,9 +490,6 @@ export async function processHandwrittenInvoiceWithOpenAI(
   }
 }
 
-/**
- * Batch process multiple handwritten invoices with OpenAI Vision
- */
 export async function processHandwrittenInvoiceBatchOpenAI(
   files: File[],
   onProgress?: (current: number, total: number, filename: string) => void
@@ -561,7 +508,6 @@ export async function processHandwrittenInvoiceBatchOpenAI(
       results.push(result);
     } catch (error) {
       console.error(`Failed to process ${file.name}:`, error);
-      // Continue with other files even if one fails
       results.push({
         filename: file.name,
         totalPages: 0,

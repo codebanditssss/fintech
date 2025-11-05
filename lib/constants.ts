@@ -1,7 +1,3 @@
-// ==========================================
-// UI CONSTANTS
-// ==========================================
-
 export const STATUS_CONFIG = {
   idle: {
     label: 'Ready',
@@ -85,9 +81,6 @@ export const CONFIDENCE_COLORS = {
   },
 } as const;
 
-// ==========================================
-// FILE UPLOAD CONSTANTS
-// ==========================================
 
 export const FILE_TYPES = {
   REGULAR: {
@@ -105,21 +98,12 @@ export const FILE_TYPES = {
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
 export const MAX_FILE_SIZE_TEXT = '10MB';
 
-// ==========================================
-// POLLING CONSTANTS
-// ==========================================
 
 export const POLLING_INTERVAL = 2000; // 2 seconds
 
-// ==========================================
-// TABLE CONSTANTS
-// ==========================================
 
 export const RECORDS_PER_PAGE = 10;
 
-// ==========================================
-// CHAT CONSTANTS
-// ==========================================
 
 export const MAX_CONVERSATION_HISTORY = 4;
 

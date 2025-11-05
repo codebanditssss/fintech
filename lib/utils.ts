@@ -3,17 +3,9 @@ import { twMerge } from "tailwind-merge"
 import { CONFIDENCE_COLORS, CONFIDENCE_LEVELS, STATUS_CONFIG } from './constants';
 import { JobStatus } from './types';
 
-// ==========================================
-// CLASSNAME UTILITIES
-// ==========================================
-
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
-
-// ==========================================
-// DATE/TIME UTILITIES
-// ==========================================
 
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -41,19 +33,11 @@ export function formatTime(date: Date): string {
   });
 }
 
-// ==========================================
-// FILE SIZE UTILITIES
-// ==========================================
-
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
-
-// ==========================================
-// VALIDATION UTILITIES
-// ==========================================
 
 export function validateFileType(file: File, invoiceType: 'regular' | 'handwritten'): boolean {
   if (invoiceType === 'regular') {
@@ -66,10 +50,6 @@ export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
-
-// ==========================================
-// STATUS UTILITIES
-// ==========================================
 
 export function getStatusConfig(status: JobStatus | 'processing' | 'completed') {
   return STATUS_CONFIG[status] || STATUS_CONFIG.idle;
@@ -87,10 +67,6 @@ export function getConfidenceLabel(confidence: number): 'HIGH' | 'MEDIUM' | 'LOW
   return 'LOW';
 }
 
-// ==========================================
-// STRING UTILITIES
-// ==========================================
-
 export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return `${str.substring(0, maxLength)}...`;
@@ -100,10 +76,6 @@ export function pluralize(count: number, singular: string, plural?: string): str
   if (count === 1) return singular;
   return plural || `${singular}s`;
 }
-
-// ==========================================
-// ARRAY UTILITIES
-// ==========================================
 
 export function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
   return array.reduce((result, item) => {
@@ -115,10 +87,6 @@ export function groupBy<T>(array: T[], key: keyof T): Record<string, T[]> {
     return result;
   }, {} as Record<string, T[]>);
 }
-
-// ==========================================
-// DOWNLOAD UTILITIES
-// ==========================================
 
 export function downloadFile(blob: Blob, filename: string): void {
   const url = window.URL.createObjectURL(blob);
