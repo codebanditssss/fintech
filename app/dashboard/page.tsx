@@ -185,9 +185,9 @@ export default function Dashboard() {
             {currentJobId && jobStatus === 'completed' && (
               <Button 
                 onClick={handleNewUpload}
-                variant="ghost"
+                variant="icon"
                 size="sm"
-                className="text-zinc-700 hover:text-zinc-900 rounded-lg shadow-none"
+                className="text-zinc-700 hover:text-zinc-900 rounded-lg shadow-sm"
               >
                 New Upload
               </Button>
@@ -195,9 +195,9 @@ export default function Dashboard() {
             <Button 
               onClick={handleExportCSV}
               disabled={!currentJobId || isExporting}
-              variant="ghost"
+              variant="icon"
               size="sm"
-              className="text-zinc-700 hover:text-zinc-900 rounded-lg flex items-center gap-2 shadow-none"
+              className="text-zinc-700 hover:text-zinc-900 rounded-lg flex items-center gap-2 shadow-sm"
             >
               <Download className="w-4 h-4" />
               {isExporting ? 'Exporting...' : 'Export CSV'}
@@ -213,7 +213,7 @@ export default function Dashboard() {
               onClick={handleLogout}
               disabled={isLoggingOut}
               variant="icon"
-              className="p-2 text-zinc-600 hover:text-zinc-900"
+              className="p-2 text-zinc-600 hover:text-zinc-900 shadow-sm"
               title="Logout"
             >
               <LogOut className="w-4 h-4" />

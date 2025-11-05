@@ -93,10 +93,10 @@ export default function LandingPage() {
             </div>
           </h1>
           <p className="text-xl md:text-2xl text-zinc-600 max-w-2xl mx-auto mb-4 leading-relaxed">
-            Transform complex financial documents into normalized, actionable data
+            Extract financial data from PDF invoices and receipts using AI
           </p>
           <p className="text-lg text-zinc-500 max-w-xl mx-auto mb-10">
-            Advanced AI-powered concept extraction and normalization in real-time
+            Upload PDFs, get normalized data with synonym mapping and Q&A chat
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button 
@@ -123,10 +123,10 @@ export default function LandingPage() {
       <section className="max-w-7xl mx-auto px-6 py-16 md:py-24">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-semibold text-zinc-900 mb-4">
-            Enterprise-Grade Solutions
+            How It Works
           </h2>
           <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
-            Built for finance teams who need accuracy, speed, and reliability
+            Upload PDF invoices and receipts, extract data automatically with AI
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -135,10 +135,10 @@ export default function LandingPage() {
               <Zap className="w-6 h-6 text-zinc-900" />
             </div>
             <h3 className="text-xl font-semibold text-zinc-900 mb-3">
-              Lightning Fast Processing
+              Works with Any PDF Layout
             </h3>
             <p className="text-zinc-600 leading-relaxed">
-              Upload and process complex financial documents in seconds. Advanced algorithms ensure rapid extraction without compromising accuracy.
+              Upload simple invoices or complex multi-tax documents. Uses OpenAI GPT-4o-mini to understand context, not just match keywords.
             </p>
           </div>
           <div className="p-8 bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 transition-colors shadow-sm">
@@ -146,10 +146,10 @@ export default function LandingPage() {
               <Shield className="w-6 h-6 text-zinc-900" />
             </div>
             <h3 className="text-xl font-semibold text-zinc-900 mb-3">
-              Secure & Reliable
+              Batch Processing
             </h3>
             <p className="text-zinc-600 leading-relaxed">
-              Enterprise-level security with end-to-end encryption. Your sensitive financial data is protected with industry-standard safeguards.
+              Upload multiple documents at once and process them simultaneously. See results appear in real-time as they're processed.
             </p>
           </div>
           <div className="p-8 bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 transition-colors shadow-sm">
@@ -157,10 +157,10 @@ export default function LandingPage() {
               <BarChart3 className="w-6 h-6 text-zinc-900" />
             </div>
             <h3 className="text-xl font-semibold text-zinc-900 mb-3">
-              Intelligent Normalization
+              Smart Synonym Mapping
             </h3>
             <p className="text-zinc-600 leading-relaxed">
-              AI-powered concept extraction transforms varied terminology into standardized formats, enabling seamless data integration.
+              Map variations like G.S.T, IGST, CGST to a single term (GST). The system learns from your corrections and applies them automatically.
             </p>
           </div>
         </div>
@@ -171,10 +171,10 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-semibold text-zinc-900 mb-4">
-                Why Choose FinTech
+                Key Features
               </h2>
               <p className="text-lg text-zinc-600">
-                Streamline your workflow with powerful features designed for modern finance teams
+                Everything you need to extract and analyze financial data from PDFs
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -184,10 +184,10 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-zinc-900 mb-2">
-                    Real-Time Processing
+                    Q&A Chat Interface
                   </h3>
                   <p className="text-zinc-600">
-                    Process documents instantly as they're uploaded. No waiting, no delays.
+                    Ask questions about your data in natural language. "What's the total GST amount?" or "Show all taxes from invoice_001.pdf"
                   </p>
                 </div>
               </div>
@@ -197,10 +197,10 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-zinc-900 mb-2">
-                    Comprehensive Export Options
+                    CSV Export
                   </h3>
                   <p className="text-zinc-600">
-                    Export normalized data in multiple formats including CSV, JSON, and Excel.
+                    Download all extracted data with document names, page numbers, confidence scores, and evidence snippets.
                   </p>
                 </div>
               </div>
@@ -210,10 +210,10 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-zinc-900 mb-2">
-                    Advanced Synonym Management
+                    Evidence Tracking
                   </h3>
                   <p className="text-zinc-600">
-                    Intelligent synonym detection and mapping ensures consistent data normalization.
+                    See the exact text snippet from the PDF for every extracted value. Know where each piece of data came from.
                   </p>
                 </div>
               </div>
@@ -223,10 +223,10 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-zinc-900 mb-2">
-                    Detailed Evidence Tracking
+                    Confidence Scoring
                   </h3>
                   <p className="text-zinc-600">
-                    Track every concept back to its source with page-level evidence references.
+                    Each extraction includes an accuracy indicator so you know which values to double-check.
                   </p>
                 </div>
               </div>
@@ -238,10 +238,10 @@ export default function LandingPage() {
       <section className="max-w-7xl mx-auto px-6 py-20 md:py-32">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-semibold text-zinc-900 mb-6">
-            Ready to Transform Your Financial Data?
+            Start Extracting Data from Your PDFs
           </h2>
           <p className="text-lg text-zinc-600 mb-10 max-w-xl mx-auto">
-            Join finance teams worldwide who trust FinTech for accurate, fast document processing.
+            Built with Next.js, Supabase, and OpenAI. Upload invoices, get structured data.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button 
@@ -250,7 +250,7 @@ export default function LandingPage() {
               className="w-full sm:w-auto px-10 py-6 text-base font-medium"
               onClick={() => setLoginModalOpen(true)}
             >
-              Start Processing Now
+              Login
             </Button>
             <Button 
               variant="outline" 
@@ -258,7 +258,7 @@ export default function LandingPage() {
               className="w-full sm:w-auto px-10 py-6 text-base font-medium"
               onClick={() => setSignupModalOpen(true)}
             >
-              Sign Up Free
+              Create Account
             </Button>
           </div>
         </div>

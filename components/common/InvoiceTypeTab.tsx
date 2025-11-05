@@ -18,7 +18,7 @@ export function InvoiceTypeTab({ type, label, icon, active, onClick }: InvoiceTy
       className={`rounded-lg flex items-center gap-2 ${
         active
           ? 'bg-zinc-900 text-white hover:bg-zinc-800'
-          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+          : 'bg-zinc-100 text-white hover:bg-zinc-200'
       }`}
     >
       {icon}
