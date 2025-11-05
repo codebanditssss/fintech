@@ -17,6 +17,7 @@ import {
   ConfidenceBadge,
   FileIcon,
   InfoCard,
+  Pagination,
 } from '@/components/common';
 
 interface ResultsTableProps {
@@ -156,19 +157,10 @@ export default function ResultsTable({ jobId, onRowClick }: ResultsTableProps) {
       </Table>
 
       {filteredData.length > 0 && (
-        <div className="px-6 py-4 border-t border-zinc-200 flex items-center justify-between">
-          <p className="text-xs text-zinc-500">
-            Showing {filteredData.length} of {data.length} results
-          </p>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 text-xs font-medium text-zinc-700 border border-zinc-300 rounded hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-              Previous
-            </button>
-            <button className="px-3 py-1.5 text-xs font-medium text-zinc-700 border border-zinc-300 rounded hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-              Next
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentCount={filteredData.length}
+          totalCount={data.length}
+        />
       )}
     </InfoCard>
   );

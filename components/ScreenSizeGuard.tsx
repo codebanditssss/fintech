@@ -16,10 +16,8 @@ export function ScreenSizeGuard({ children }: { children: React.ReactNode }) {
       setIsScreenTooSmall(width < 600);
     };
 
-    // Check on mount
     checkScreenSize();
 
-    // Check on resize
     window.addEventListener('resize', checkScreenSize);
 
     return () => {
@@ -27,7 +25,6 @@ export function ScreenSizeGuard({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Don't render anything until mounted to avoid hydration mismatch
   if (!mounted) {
     return <>{children}</>;
   }

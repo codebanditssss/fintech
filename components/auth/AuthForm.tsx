@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AuthFormData, SignUpFormData } from '@/types';
+import { AuthFormData, SignUpFormData } from '@/lib/types';
 
 interface AuthFormProps {
   mode: 'login' | 'signup';

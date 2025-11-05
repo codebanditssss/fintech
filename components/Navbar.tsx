@@ -23,7 +23,6 @@ export function LandingNavbar({ onLoginClick, onSignupClick }: LandingNavbarProp
 
   return (
     <ResizableNavbar>
-      {/* Desktop Navbar */}
       <NavBody>
         <Link
           href="/"
@@ -55,7 +54,6 @@ export function LandingNavbar({ onLoginClick, onSignupClick }: LandingNavbarProp
         </div>
       </NavBody>
 
-      {/* Mobile Navbar */}
       <MobileNav>
         <MobileNavHeader>
           <Link

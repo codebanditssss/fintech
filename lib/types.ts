@@ -1,13 +1,6 @@
-// ==========================================
-// CORE TYPES
-// ==========================================
-
 export type JobStatus = 'idle' | 'queued' | 'running' | 'done' | 'error';
 export type InvoiceType = 'regular' | 'handwritten';
 
-// ==========================================
-// DATABASE MODELS
-// ==========================================
 
 export interface Document {
   id: string;

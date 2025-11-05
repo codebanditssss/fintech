@@ -17,4 +17,5 @@ export * from './InvoiceTypeTab';
 export * from './FileListItem';
 export * from './SynonymForm';
 export * from './SynonymItem';
+export * from './Pagination';
 
